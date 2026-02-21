@@ -26,12 +26,13 @@ const protect = async (req, res, next) => {
 
 // Restrict access to specific roles
 const authorizeRoles = (...roles) => {
-  return (req, res) => {
+  return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         message: `Access denied. Role '${req.user.role}' is not permitted.`,
       });
     }
+    next();
   };
 };
 
