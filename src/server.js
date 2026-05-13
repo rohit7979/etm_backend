@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const trainingRoutes = require('./routes/training');
 const assignmentRoutes = require('./routes/assignment');
+const userRoutes = require('./routes/users');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/trainings', trainingRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Employee Training Management System API is running.' });
