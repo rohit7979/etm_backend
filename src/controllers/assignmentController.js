@@ -214,6 +214,39 @@ const getProgressSummary = async (req, res) => {
   }
 };
 
+// @desc    Get logged-in employee's own assignment stats
+// @route   GET /api/assignments/my-stats
+// @access  Private (employee + admin)
+const getMyStats = async (req, res) => {
+  try {
+    const employeeId = req.user._id;
+
+    const [total, completed, inProgress, pending, recentAssignments] = await Promise.all([
+      Assignment.countDocuments({ employee: employeeId }),
+      Assignment.countDocuments({ employee: employeeId, status: 'completed' }),
+      Assignment.countDocuments({ employee: employeeId, status: 'in_progress' }),
+      Assignment.countDocuments({ employee: employeeId, status: 'pending' }),
+      Assignment.find({ employee: employeeId })
+        .populate('training', 'title category durationHours')
+        .sort({ updatedAt: -1 })
+        .limit(5),
+    ]);
+
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    res.status(200).json({
+      total,
+      completed,
+      inProgress,
+      pending,
+      completionRate,
+      recentAssignments,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
 module.exports = {
   assignTraining,
   getAllAssignments,
@@ -221,4 +254,5 @@ module.exports = {
   updateAssignmentStatus,
   deleteAssignment,
   getProgressSummary,
+  getMyStats,
 };
