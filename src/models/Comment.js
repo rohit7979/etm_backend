@@ -18,6 +18,11 @@ const commentSchema = new mongoose.Schema(
       trim: true,
       maxlength: [1000, 'Comment cannot exceed 1000 characters'],
     },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment',
+      default: null,
+    },
   },
   { timestamps: true }
 );

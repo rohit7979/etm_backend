@@ -6,7 +6,7 @@ const Assignment = require('../models/Assignment');
 // @access  Private (admin + employee who owns the assignment)
 const addComment = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, replyToId } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({ message: 'Comment text is required.' });
@@ -25,13 +25,27 @@ const addComment = async (req, res) => {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
+    // Validate replyTo if provided
+    if (replyToId) {
+      const parentComment = await Comment.findById(replyToId);
+      if (!parentComment || parentComment.assignment.toString() !== assignment._id.toString()) {
+        return res.status(400).json({ message: 'Invalid replyTo comment.' });
+      }
+    }
+
     const comment = await Comment.create({
       assignment: assignment._id,
       author: req.user._id,
       text: text.trim(),
+      replyTo: replyToId || null,
     });
 
     await comment.populate('author', 'name email role');
+    await comment.populate({
+      path: 'replyTo',
+      select: 'text author',
+      populate: { path: 'author', select: 'name' },
+    });
 
     res.status(201).json({ message: 'Comment added successfully.', comment });
   } catch (error) {
@@ -59,6 +73,11 @@ const getComments = async (req, res) => {
 
     const comments = await Comment.find({ assignment: req.params.id })
       .populate('author', 'name email role')
+      .populate({
+        path: 'replyTo',
+        select: 'text author',
+        populate: { path: 'author', select: 'name' },
+      })
       .sort({ createdAt: 1 });
 
     res.status(200).json({ count: comments.length, comments });
